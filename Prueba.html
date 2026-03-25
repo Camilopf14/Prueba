@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Dashboard Reforma</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@0.321.0"></script>
+</head>
+<body class="bg-slate-50">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo, useEffect } = React;
+
+        // DATOS FICTICIOS PARA LA PRUEBA
+        const DATA_PRUEBA = {
+            "p": [
+                { "n": 101, "id": "Párrafo 101: Uso de la Fuerza", "obj": "Establecer guías claras sobre fuerza letal.", "est": "Met" },
+                { "n": 102, "id": "Párrafo 102: Entrenamiento Táctico", "obj": "Capacitación anual de todos los agentes.", "est": "Missed" },
+                { "n": 103, "id": "Párrafo 103: Ética Profesional", "obj": "Código de conducta actualizado.", "est": "Met" }
+            ],
+            "h": [
+                { "p": 102, "obs": "Se observó que el 30% de la flota no ha tomado el curso de re-adiestramiento este año." },
+                { "p": 101, "obs": "Las políticas de 2024 están alineadas con los estándares internacionales." }
+            ],
+            "t": [
+                { "p": 102, "tarea": "Programar sesiones de entrenamiento de recuperación", "est": "In Progress", "unid": "Academia", "fecha": "2024-12-15" }
+            ]
+        };
+
+        const DashboardDemo = () => {
+            const [search, setSearch] = useState("");
+            const [filter, setFilter] = useState("all");
+            const [expandedId, setExpandedId] = useState(null);
+
+            // Filtrado de datos
+            const filteredData = useMemo(() => {
+                return DATA_PRUEBA.p.filter(item => {
+                    const matchesSearch = item.id.toLowerCase().includes(search.toLowerCase()) || item.n.toString().includes(search);
+                    const matchesFilter = filter === "all" || (filter === "met" && item.est === "Met") || (filter === "missed" && item.est === "Missed");
+                    return matchesSearch && matchesFilter;
+                });
+            }, [search, filter]);
+
+            // Función para colores
+            const getEstatusColor = (est) => {
+                if (est === "Met") return "bg-green-100 text-green-700 border-green-200";
+                if (est === "Missed") return "bg-red-100 text-red-700 border-red-200";
+                return "bg-blue-100 text-blue-700 border-blue-200";
+            };
+
+            // Ejecutar iconos después de renderizar
+            useEffect(() => {
+                lucide.createIcons();
+            }, [filteredData, expandedId]);
+
+            return (
+                <div className="p-6 max-w-4xl mx-auto font-sans">
+                    <header className="mb-8">
+                        <h1 className="text-2xl font-bold text-slate-800">Panel de Control de Reforma (DEMO)</h1>
+                        <p className="text-slate-500 text-sm">Prueba de funcionalidad interactiva para Power BI / SharePoint</p>
+                    </header>
+
+                    {/* Buscador y Filtros */}
+                    <div className="flex gap-4 mb-6">
+                        <input 
+                            type="text" 
+                            placeholder="Buscar párrafo o número..." 
+                            className="flex-1 p-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                        <select 
+                            className="p-2 border rounded-lg bg-white shadow-sm"
+                            onChange={(e) => setFilter(e.target.value)}
+                        >
+                            <option value="all">Todos</option>
+                            <option value="met">Cumplidos</option>
+                            <option value="missed">Pendientes</option>
+                        </select>
+                    </div>
+
+                    {/* Lista de Párrafos */}
+                    <div className="space-y-4">
+                        {filteredData.map(item => (
+                            <div key={item.n} className="bg-white border rounded-xl shadow-sm overflow-hidden transition-all">
+                                <div 
+                                    className="p-4 cursor-pointer hover:bg-slate-50 flex items-center justify-between"
+                                    onClick={() => setExpandedId(expandedId === item.n ? null : item.n)}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <i data-lucide="file-text" className="text-slate-400"></i>
+                                        <span className="font-semibold text-slate-700">{item.id}</span>
+                                    </div>
+                                    <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getEstatusColor(item.est)}`}>
+                                        {item.est}
+                                    </span>
+                                </div>
+
+                                {expandedId === item.n && (
+                                    <div className="p-4 bg-slate-50 border-t border-slate-100">
+                                        <div className="mb-4">
+                                            <h4 className="text-xs font-bold text-slate-400 uppercase mb-1">Objetivo</h4>
+                                            <p className="text-sm text-slate-600">{item.obj}</p>
+                                        </div>
+                                        
+                                        {/* Hallazgos asociados */}
+                                        <div className="space-y-2">
+                                            <h4 className="text-xs font-bold text-slate-400 uppercase">Hallazgos del Monitor</h4>
+                                            {DATA_PRUEBA.h.filter(h => h.p === item.n).map((h, i) => (
+                                                <div key={i} className="flex gap-2 text-sm text-slate-600 bg-white p-2 rounded border border-slate-200">
+                                                    <i data-lucide="alert-circle" className="w-4 h-4 text-amber-500"></i>
+                                                    {h.obs}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<DashboardDemo />);
+    </script>
+</body>
+</html>
